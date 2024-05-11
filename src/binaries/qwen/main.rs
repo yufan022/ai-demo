@@ -1,4 +1,4 @@
-use application::add;
+use qwen::add;
 
 fn main() {
     let result = add(1, 1);
