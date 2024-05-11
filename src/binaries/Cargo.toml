@@ -14,7 +14,7 @@ qwen = { path =  "../qwen/service"}
 
 
 [[bin]]
-name = "qwen"
-path = "qwen/main.rs"
+name = "app"
+path = "app/main.rs"
 doctest = false
 test = false
