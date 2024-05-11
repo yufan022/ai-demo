@@ -7,3 +7,4 @@ license = ""
 
 [workspace]
 members = ["src/binaries", "src/qwen/service", "src/common/base"]
+resolver = "2"

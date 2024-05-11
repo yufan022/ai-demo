@@ -1,5 +1,5 @@
 [package]
-name = "qwen-demo"
+name = "qwen"
 description = "qwen service"
 version = { workspace = true }
 authors = { workspace = true }
