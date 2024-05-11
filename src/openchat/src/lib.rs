@@ -1,3 +1,5 @@
+pub mod service;
+
 pub fn add(left: usize, right: usize) -> usize {
     common_base::add(left, right)
 }
