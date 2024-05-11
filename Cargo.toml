@@ -6,5 +6,5 @@ publish = false
 license = ""
 
 [workspace]
-members = ["src/binaries", "src/qwen/service", "src/common/base"]
+members = ["src/binaries", "src/qwen", "src/openchat", "src/common/base"]
 resolver = "2"
