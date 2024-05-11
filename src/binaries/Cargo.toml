@@ -1,0 +1,20 @@
+[package]
+name = "ai-binaries"
+description = "ai-binaries"
+version = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+publish = { workspace = true }
+edition = { workspace = true }
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+application = { path =  "../qwen/service"}
+
+
+[[bin]]
+name = "qwen"
+path = "qwen/main.rs"
+doctest = false
+test = false
