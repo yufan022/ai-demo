@@ -1,4 +1,5 @@
 pub mod service;
+mod token_output_stream;
 
 pub fn add(left: usize, right: usize) -> usize {
     common_base::add(left, right)
