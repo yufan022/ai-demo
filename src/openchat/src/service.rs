@@ -6,7 +6,7 @@ use candle_core::quantized::gguf_file;
 use candle_transformers::generation::LogitsProcessor;
 use tokenizers::{Tokenizer, tokenizer};
 use candle_transformers::models::quantized_llama;
-use crate::token_output_stream::TokenOutputStream;
+use common_base::token_output_stream::TokenOutputStream;
 
 struct Args {
     model: String,
