@@ -1,3 +1,4 @@
+use std::io::Write;
 use candle_core::Result;
 
 /// This is a wrapper around a tokenizer to ensure that tokens can be returned to the user in a
@@ -39,6 +40,9 @@ impl TokenOutputStream {
             self.decode(tokens)?
         };
         self.tokens.push(token);
+        print!("{:?}", &self.tokens[self.prev_index..]);
+        std::io::stdout().flush()?;
+
         let text = self.decode(&self.tokens[self.prev_index..])?;
         if text.len() > prev_text.len() && text.chars().last().unwrap().is_ascii() {
             let text = text.split_at(prev_text.len());

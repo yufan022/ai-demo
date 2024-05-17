@@ -27,7 +27,7 @@ pub fn run() -> anyhow::Result<()> {
     println!("load tokenizer");
     let tokenizer_path = PathBuf::from("./hf_hub/openchat_3.5_tokenizer.json");
     let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(anyhow::Error::msg)?;
-    let mut tos = TokenOutputStream::new(tokenizer);
+    // let mut tos = TokenOutputStream::new(tokenizer);
 
     // quantinized
     println!("quantinized");
@@ -35,11 +35,11 @@ pub fn run() -> anyhow::Result<()> {
 
     // calculate
     println!("calculate");
-    // let tokens = tokenizer.encode("User: 'who are you' <|end_of_turn|> Assistant:", true).map_err(anyhow::Error::msg)?;
-    let tokens = tos
-        .tokenizer()
-        .encode("User: 'who are you' <|end_of_turn|> Assistant:", true)
-        .map_err(anyhow::Error::msg)?;
+    let tokens = tokenizer.encode("User: 'who are you' <|end_of_turn|> Assistant:", true).map_err(anyhow::Error::msg)?;
+    // let tokens = tos
+    //     .tokenizer()
+    //     .encode("User: 'who are you' <|end_of_turn|> Assistant:", true)
+    //     .map_err(anyhow::Error::msg)?;
     let prompt_tokens = tokens.get_ids();
     println!("logits_processor");
     let mut logits_processor = LogitsProcessor::new(1, Some(0.8), None);
@@ -49,30 +49,40 @@ pub fn run() -> anyhow::Result<()> {
     println!("logits_processor sample");
     let mut next_token = logits_processor.sample(&logits)?;
     println!("decode");
-    if let Some(t) = tos.next_token(next_token)? {
-        print!("{t}");
-    }
-    // match tokenizer.decode(&[next_token], true) {
-    //     Ok(str) => print!("question: {}", str),
-    //     Err(err) => println!("cannot decode: {err}"),
-    // };
+    // if let Some(t) = tos.next_token(next_token)? {
+    //     print!("{t}");
+    // }
+    let mut prev_index = 0;
+    let mut curr_index = 0;
+    let mut tokens = Vec::new();
+    tokens.push(next_token);
+    match tokenizer.decode(&tokens[prev_index..], true) {
+        Ok(str) => print!("question: {}", str),
+        Err(err) => println!("cannot decode: {err}"),
+    };
+    prev_index = curr_index;
+    curr_index = tokens.len();
 
     // println!("answer:");
     let eos_token = "<|end_of_turn|>";
-    // let eos_token = *tokenizer.get_vocab(true).get(eos_token).unwrap();
-    let eos_token = *tos.tokenizer().get_vocab(true).get(eos_token).unwrap();
+    let eos_token = *tokenizer.get_vocab(true).get(eos_token).unwrap();
+    // let eos_token = *tos.tokenizer().get_vocab(true).get(eos_token).unwrap();
     for index in 0..1000 {
+        let prev_text = tokenizer.decode(&tokens[prev_index..curr_index], true).expect("failed");
         let input = Tensor::new(&[next_token], &metal)?.unsqueeze(0)?;
         let logits = model.forward(&input, prompt_tokens.len() + index)?;
         let logits = logits.squeeze(0)?;
         next_token = logits_processor.sample(&logits)?;
-        if let Some(t) = tos.next_token(next_token)? {
-            print!("{t}");
-        }
-        // match tokenizer.decode(&[next_token], true) {
-        //     Ok(str) => print!("{}", str),
-        //     Err(err) => println!("cannot decode: {err}"),
-        // };
+        // if let Some(t) = tos.next_token(next_token)? {
+        //     print!("{t}");
+        // }
+        tokens.push(next_token);
+        match tokenizer.decode(&tokens[prev_index..], true) {
+            Ok(str) => print!("{}", str.split_at(prev_text.len()).1),
+            Err(err) => println!("cannot decode: {err}"),
+        };
+        prev_index = curr_index;
+        curr_index = tokens.len();
         if next_token == eos_token { break; };
     }
 
