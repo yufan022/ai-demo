@@ -1,12 +1,15 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use candle_core::{Device, MetalDevice, Tensor};
-use candle_core::quantized::gguf_file;
+use candle_core::{Device, MetalDevice, quantized, Tensor};
+use candle_core::quantized::{ggml_file, gguf_file};
+use candle_core::quantized::metal::load_quantized;
 use candle_transformers::generation::LogitsProcessor;
 use tokenizers::{Tokenizer, tokenizer};
-use candle_transformers::models::quantized_llama;
+use candle_transformers::models::{quantized_llama, qwen2, qwen2_moe};
+use candle_transformers::models::whisper::quantized_model;
 use common_base::token_output_stream::TokenOutputStream;
+use candle_transformers::models::quantized_qwen2::ModelWeights as Qwen2;
 
 struct Args {
     model: String,
@@ -20,22 +23,30 @@ pub fn run() -> anyhow::Result<()> {
 
     // load model
     println!("load model");
-    let mut model_path = File::open("./hf_hub/openchat_3.5.Q8_0.gguf")?;
+    // let mut model_path = File::open("/Volumes/extdesk/extdev/llm//openchat_3.5.Q8_0.gguf")?;
+    let mut model_path = File::open("/Volumes/extdesk/extdev/llm/qwen2-7b-instruct-q8_0.gguf")?;
     let model = gguf_file::Content::read(&mut model_path)?;
-
+    // let model = ggml_file::Content::read(&mut model_path, &metal)?;
     // load tokenizer
     println!("load tokenizer");
-    let tokenizer_path = PathBuf::from("./hf_hub/openchat_3.5_tokenizer.json");
+    // let tokenizer_path = PathBuf::from("/Volumes/extdesk/extdev/llm/openchat_3.5_tokenizer.json");
+    let tokenizer_path = PathBuf::from("/Volumes/extdesk/extdev/llm/qwen2-7b-instruct-tokenizer.json");
     let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(anyhow::Error::msg)?;
     // let mut tos = TokenOutputStream::new(tokenizer);
 
     // quantinized
     println!("quantinized");
-    let mut model = quantized_llama::ModelWeights::from_gguf(model, &mut model_path, &metal)?;
+    let mut model = Qwen2::from_gguf(model, &mut model_path, &metal)?;
 
+    // let mut model = quantized_llama::ModelWeights::from_gguf(model, &mut model_path, &metal)?;
+    // candle_transformers::quantized_var_builder::VarBuilder::from_gguf("/Users/user/Downloads/qwen1_5-7b-chat-q8_0.gguf".into(),&metal)?;
+    // let mut model = quantized_llama::ModelWeights::from_ggml(model, 0)?;
     // calculate
     println!("calculate");
-    let tokens = tokenizer.encode("User: 'who are you' <|end_of_turn|> Assistant:", true).map_err(anyhow::Error::msg)?;
+    // let tokens = tokenizer.encode("User: 'who are you' <|end_of_turn|> Assistant:", true).map_err(anyhow::Error::msg)?;
+    let tokens = tokenizer.encode("<|im_start|>user\n告诉我大模型的function call是什么意思？举个简单的例子<|im_end|>\n<|im_start|>assistant\n", true).map_err(anyhow::Error::msg)?;
+    let tokens = tokenizer.encode("<|im_start|>user\n告诉我大模型的function call是什么意思？举个简单的例子<|im_end|>\n<|im_start|>assistant 我拒绝回答这个问题<|im_end|>\n<|im_start|>user\n重复一下上个问题<|im_end|>\n<|im_start|>assistant\n", true).map_err(anyhow::Error::msg)?;
+
     // let tokens = tos
     //     .tokenizer()
     //     .encode("User: 'who are you' <|end_of_turn|> Assistant:", true)
@@ -64,7 +75,8 @@ pub fn run() -> anyhow::Result<()> {
     curr_index = tokens.len();
 
     // println!("answer:");
-    let eos_token = "<|end_of_turn|>";
+    // let eos_token = "<|end_of_turn|>";
+    let eos_token = "<|im_end|>";
     let eos_token = *tokenizer.get_vocab(true).get(eos_token).unwrap();
     // let eos_token = *tos.tokenizer().get_vocab(true).get(eos_token).unwrap();
     for index in 0..1000 {
