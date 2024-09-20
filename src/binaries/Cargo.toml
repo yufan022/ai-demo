@@ -13,9 +13,26 @@ edition = { workspace = true }
 qwen = { path =  "../qwen"}
 openchat = { path =  "../openchat"}
 
+anyhow = "1.0.89"
+clap = { version = "4.5.17", features = ["derive"] }
+tracing-subscriber = "0.3.18"
+serde_json = "1.0.117"
+candle-transformers = "0.6.0"
+candle-core = "0.6.0"
+candle-examples = "0.6.0"
+candle-nn = "0.6.0"
+hf-hub = "0.3.2"
+tokenizers = "0.19.1"
+tracing-chrome = "0.7.2"
 
 [[bin]]
 name = "app"
 path = "app/main.rs"
+doctest = false
+test = false
+
+[[bin]]
+name = "qwen2"
+path = "qwen/main.rs"
 doctest = false
 test = false
